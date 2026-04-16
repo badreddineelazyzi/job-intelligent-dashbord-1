@@ -39,7 +39,7 @@ def run_export():
 
     try:
         # 1. Lire le dernier CSV depuis MinIO
-        obj = s3_client.get_object(Bucket="processed-data", Key="unified_job_market_latest.csv")
+        obj = s3_client.get_object(Bucket="processed-data", Key="cleaned_job_market_latest.csv")
         df = pd.read_csv(BytesIO(obj['Body'].read()))
         logging.info(f"📄 CSV chargé : {len(df)} lignes à traiter.")
 
@@ -65,10 +65,12 @@ def run_export():
             exists = session.query(FactJobs).filter_by(url=row['url']).first()
             if not exists:
                 new_job = FactJobs(
-                    title=row['job_title'],  # <--- Correction faite ici
+                    title=row['job_title'],
                     description=row.get('description', ''),
                     salary_min=row.get('salary_min', 0),
                     salary_max=row.get('salary_max', 0),
+                    experience_level=row.get('experience_level'),
+                    contract_type=row.get('contract_type'),
                     source=row.get('source', 'unknown'),
                     url=row['url'],
                     company_id=company.company_id,

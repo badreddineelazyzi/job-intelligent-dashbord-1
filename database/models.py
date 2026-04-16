@@ -48,6 +48,8 @@ class FactJobs(Base):
     salary_max = Column(Float)
     source = Column(String(100))
     url = Column(Text, unique=True)
+    experience_level = Column(String(100))
+    contract_type = Column(String(100))
 
     # Clés étrangères
     company_id = Column(Integer, ForeignKey('dim_company.company_id'))

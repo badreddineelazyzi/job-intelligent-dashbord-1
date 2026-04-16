@@ -46,3 +46,13 @@ htmlcov/
 # OS generated files
 .DS_Store
 Thumbs.db
+# Docker Volumes data
+minio_data/
+dw_data/
+pgadmin_data/
+
+# Generated Data Files
+*.csv
+*.json
+!monitoring/grafana_dashboard.json
+

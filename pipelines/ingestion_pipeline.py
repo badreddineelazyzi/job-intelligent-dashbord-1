@@ -24,12 +24,11 @@ from scraping.settings import GENERAL_SETTINGS
 def upload_to_minio(data, filename):
     """Envoie les données JSON directement dans le bucket MinIO 'raw-data'"""
     try:
-        # Configuration de la connexion MinIO
-        # Note : Dans Docker, l'URL est 'http://minio-job:9000'
-        # Si tu testes hors Docker, utilise 'http://localhost:9000'
+        MINIO_URL = os.getenv("MINIO_ENDPOINT_URL", "http://localhost:9000")
+        
         s3 = boto3.client(
             's3',
-            endpoint_url='http://localhost:9000', 
+            endpoint_url=MINIO_URL,
             aws_access_key_id='admin',
             aws_secret_access_key='password123',
             region_name='us-east-1'
@@ -76,7 +75,12 @@ def run_all_scrapers():
     print("🕸️ Lancement du Web Scraping (LinkedIn, Rekrute, Indeed)...")
     results["jobs"]["linkedin"] = scrape_linkedin(keyword, location)
     results["jobs"]["rekrute"] = scrape_rekrute(keyword, "France")
-    results["jobs"]["indeed"] = scrape_indeed(keyword, location)
+    
+    try:
+        results["jobs"]["indeed"] = scrape_indeed(keyword, location)
+    except Exception as e:
+        print(f"âŒ [INDEED] Scraping Ã©chouÃ© ou navigateur introuvable (Normal dans Airflow Headless) : {e}")
+        results["jobs"]["indeed"] = []
 
     # --- 3. Sauvegarde dans le Data Lake (MinIO) ---
     timestamp = datetime.now().strftime("%Y/%m/%d/%H%M%S") # Dossiers par date YYYY/MM/DD

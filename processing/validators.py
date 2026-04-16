@@ -40,10 +40,11 @@ class JobValidator:
     def check_schema(self, df):
         """Vérifie si toutes les colonnes attendues par le Data Warehouse sont présentes"""
         expected_columns = [
-            'job_title', 'company', 'location', 'source', 
-            'url', 'description', 'date_extracted'
+            'job_title', 'company', 'location', 'source',
+            'url', 'description', 'date_extracted',
+            'skills', 'experience_level', 'contract_type', 'standard_title'
         ]
-        missing = [col for col in expected_columns if col not in df.columns]
+        missing = [col for col in expected_columns if col not in df.columns]    
         if missing:
             logging.error(f"❌ Schéma invalide ! Colonnes manquantes : {missing}")
             return False
