@@ -38,10 +38,24 @@ def run_export():
     session = Session()
 
     try:
-        # 1. Lire le dernier CSV depuis MinIO
-        obj = s3_client.get_object(Bucket="processed-data", Key="cleaned_job_market_latest.csv")
+        # --- ÉTAPE 1 : RECHERCHE DYNAMIQUE DU DERNIER FICHIER CURATED ---
+        logging.info("🔍 Recherche du dernier fichier dans 'curated-data'...")
+        response = s3_client.list_objects_v2(Bucket="curated-data")
+        
+        if 'Contents' not in response:
+            logging.error("❌ Aucun fichier trouvé dans le bucket 'curated-data'.")
+            return
+
+        # Sélection du fichier le plus récent basé sur la date de modification
+        latest_file = max(response['Contents'], key=lambda x: x['LastModified'])
+        file_key = latest_file['Key']
+        
+        logging.info(f"📄 Chargement du fichier : {file_key} ({latest_file['LastModified']})")
+        
+        obj = s3_client.get_object(Bucket="curated-data", Key=file_key)
         df = pd.read_csv(BytesIO(obj['Body'].read()))
-        logging.info(f"📄 CSV chargé : {len(df)} lignes à traiter.")
+        
+        logging.info(f"✅ CSV chargé : {len(df)} lignes à traiter.")
 
         for _, row in df.iterrows():
             # 2. Gérer les Dimensions

@@ -25,6 +25,7 @@ services:
       done;
       /usr/bin/mc mb myminio/raw-data || true;
       /usr/bin/mc mb myminio/processed-data || true;
+      /usr/bin/mc mb myminio/curated-data || true;
       echo '🚀 Buckets créés avec succès !';
       exit 0;
       "

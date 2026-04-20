@@ -4,6 +4,7 @@ import pandas as pd
 import logging
 import boto3
 from io import StringIO, BytesIO
+from datetime import datetime
 
 # Config pour Windows (Localhost) ou Docker (minio-job)
 MINIO_URL = os.getenv("MINIO_ENDPOINT_URL", "http://localhost:9000")
@@ -46,14 +47,23 @@ def run_feature_engineering():
         engineer = FeatureEngineer()
         validator = JobValidator()
 
-        # ÉTAPE 1 : LECTURE DU FICHIER NETTOYÉ DEPUIS MINIO
-        logging.info("📦 Lecture du fichier nettoyé depuis le bucket 'processed-data'...")
-        try:
-            obj = S3_CLIENT.get_object(Bucket="processed-data", Key="cleaned_job_market_latest.csv")
-            cleaned_df = pd.read_csv(BytesIO(obj['Body'].read()), encoding='utf-8-sig')
-        except Exception as e:
-            logging.error(f"❌ Impossible de lire 'cleaned_job_market_latest.csv' : {e}")
+        # --- ÉTAPE 1 : RÉCUPÉRATION DYNAMIQUE DU DERNIER FICHIER PROCESSED ---
+        logging.info("🔍 Recherche du fichier le plus récent dans 'processed-data'...")
+        
+        response = S3_CLIENT.list_objects_v2(Bucket="processed-data")
+        
+        if 'Contents' not in response:
+            logging.error("❌ Aucun fichier trouvé dans le bucket 'processed-data'.")
             return
+
+        # On trouve le fichier avec la date de modification la plus récente
+        latest_processed_file = max(response['Contents'], key=lambda x: x['LastModified'])
+        file_key = latest_processed_file['Key']
+        
+        logging.info(f"📦 Lecture du fichier : {file_key}")
+        
+        obj = S3_CLIENT.get_object(Bucket="processed-data", Key=file_key)
+        cleaned_df = pd.read_csv(BytesIO(obj['Body'].read()), encoding='utf-8-sig')
 
         if cleaned_df.empty:
             logging.warning("⚠️ Dataset vide. Arrêt du Feature Engineering.")
@@ -71,18 +81,22 @@ def run_feature_engineering():
             logging.error("❌ Le schéma final est invalide après feature engineering.")
             return
 
-        # ÉTAPE 4 : SAUVEGARDE DU FICHIER FINAL SUR MINIO
+        # --- ÉTAPE 4 : SAUVEGARDE AVEC TIMESTAMP DANS CURATED ---
         csv_buffer = StringIO()
         final_df.to_csv(csv_buffer, index=False, encoding='utf-8-sig')
         
+        # Génération du timestamp pour le stockage final
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        final_filename = f"final_features_job_market_{timestamp}.csv"
+        
         S3_CLIENT.put_object(
-            Bucket="processed-data",
-            Key="final_features_job_market_latest.csv",
+            Bucket="curated-data",
+            Key=final_filename,
             Body=csv_buffer.getvalue(),
             ContentType='text/csv'
         )
         
-        logging.info("✨ TERMINÉ : Fichier final NLP/Feature sauvegardé ['final_features_job_market_latest.csv'] dans MinIO.")
+        logging.info(f"✨ TERMINÉ : Fichier final sauvegardé sous : {final_filename}")
 
     except Exception as e:
         logging.critical(f"💥 Erreur fatale durant le pipeline de features : {e}")

@@ -100,14 +100,20 @@ def run_processing():
             # --- ÉTAPE 3 : SAUVEGARDE VERS MINIO (PROCESSED) ---
             csv_buffer = StringIO()
             cleaned_df.to_csv(csv_buffer, index=False, encoding='utf-8-sig')
+
+            # 1. Générer le timestamp précis
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            # 2. Nom unique sans redondance
+            filename = f"cleaned_job_market_{timestamp}.csv"
             
             # Sauvegarde 'Latest' pour la suite du pipeline (Feature Engineering)
             S3_CLIENT.put_object(
-                Bucket="processed-data",
-                Key="cleaned_job_market_latest.csv",
-                Body=csv_buffer.getvalue(),
-                ContentType='text/csv'
-            )
+             Bucket="processed-data",
+             Key=filename,
+             Body=csv_buffer.getvalue(),
+             ContentType='text/csv'
+             )
             
             logging.info("✨ TERMINÉ : Fichier de base sauvegardé dans le bucket 'processed-data' sous le nom 'cleaned_job_market_latest.csv'")
             

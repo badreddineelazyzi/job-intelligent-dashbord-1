@@ -10,6 +10,8 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from pipelines.processing_pipeline import run_processing
+from pipelines.feature_pipeline import run_feature_engineering
+
 
 default_args = {
     "owner": "data-team",
@@ -35,10 +37,17 @@ with DAG(
         python_callable=run_processing,
     )
 
+
+    feature_engineering_task = PythonOperator(
+        task_id="feature_engineering",
+        python_callable=run_feature_engineering,
+    )
+
+
     trigger_export_task = TriggerDagRunOperator(
         task_id="trigger_export_pipeline",
         trigger_dag_id="03_export_to_database",
         wait_for_completion=False,
     )
 
-    process_data_task >> trigger_export_task
+    process_data_task >> feature_engineering_task >> trigger_export_task

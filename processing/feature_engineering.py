@@ -30,7 +30,7 @@ class FeatureEngineer:
         if df.empty:
             return df
             
-        print("™&þ [FEATURE ENGINEERING] Extraction of skills and experience...")
+        print(" [FEATURE ENGINEERING] Extraction of skills and experience...")
         
         # Ensure description is string
         df["description"] = df["description"].fillna("").astype(str)
@@ -58,16 +58,16 @@ class FeatureEngineer:
         return ",".join(found_skills)
 
     def _extract_experience(self, text):
-        if re.search(r"\b(junior|débutant|junior|0-2 ans|debutant|entry level)\b", text):
+        if re.search(r"\b(junior|dï¿½butant|junior|0-2 ans|debutant|entry level)\b", text):
             return "Junior"
-        elif re.search(r"\b(senior|sénior|lead|expert|principal|manager|5\+ ans|5 ans)\b", text):
+        elif re.search(r"\b(senior|sï¿½nior|lead|expert|principal|manager|5\+ ans|5 ans)\b", text):
             return "Senior"
         return "Mid/Unspecified"
 
     def _extract_contract(self, text):
         if re.search(r"\b(cdi|permanent|plein temps)\b", text):
             return "CDI / Permanent"
-        elif re.search(r"\b(freelance|indépendant|independant|contractor)\b", text):
+        elif re.search(r"\b(freelance|indï¿½pendant|independant|contractor)\b", text):
             return "Freelance / Contract"
         elif re.search(r"\b(cdd|temporary|temporaire)\b", text):
             return "CDD / Temporary"
