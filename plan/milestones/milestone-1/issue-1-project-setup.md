@@ -4,6 +4,6 @@
 Initialize the repository, setup virtual environment, establish linting rules (black, flake8), and configure environment variables `.env`.
 
 **Acceptance Criteria:**
-- [ ] `requirements.txt` is updated
-- [ ] `.gitignore` is complete
-- [ ] Basic project structure validated
+- [x] `requirements.txt` is updated
+- [x] `.gitignore` is complete
+- [x] Basic project structure validated

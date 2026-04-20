@@ -48,12 +48,17 @@ class FactJobs(Base):
     salary_max = Column(Float)
     source = Column(String(100))
     url = Column(Text, unique=True)
+    experience_level = Column(String(100))
+    contract_type = Column(String(100))
 
     # Clés étrangères
     company_id = Column(Integer, ForeignKey('dim_company.company_id'))
     location_id = Column(Integer, ForeignKey('dim_location.location_id'))
     category_id = Column(Integer, ForeignKey('dim_category.category_id'))
     date_id = Column(Integer, ForeignKey('dim_time.date_id'))
-
-    # Relations Many-to-Many
+    # Relationships
+    company = relationship("DimCompany", backref="jobs")
+    location = relationship("DimLocation", backref="jobs")
+    category = relationship("DimCategory", backref="jobs")
+        # Relations Many-to-Many
     skills = relationship('DimSkills', secondary=job_skills, backref='jobs')

@@ -13,7 +13,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from database.db_session import engine
-from database.models import FactJobs, DimCompany, DimLocation, DimTime, DimCategory, DimSkills
+from database.models import Base, FactJobs, DimCompany, DimLocation, DimTime, DimCategory, DimSkills
 
 # Configuration Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,16 +32,33 @@ def get_or_create(session, model, **kwargs):
     return instance
 
 def run_export():
+    from database.models import Base
+    from database.db_session import engine
+    Base.metadata.create_all(bind=engine)
     logging.info("📤 [EXPORT PIPELINE] Début de l'export vers PostgreSQL...")
     
     Session = sessionmaker(bind=engine)
     session = Session()
 
     try:
-        # 1. Lire le dernier CSV depuis MinIO
-        obj = s3_client.get_object(Bucket="processed-data", Key="unified_job_market_latest.csv")
+        # --- ÉTAPE 1 : RECHERCHE DYNAMIQUE DU DERNIER FICHIER CURATED ---
+        logging.info("🔍 Recherche du dernier fichier dans 'curated-data'...")
+        response = s3_client.list_objects_v2(Bucket="curated-data")
+        
+        if 'Contents' not in response:
+            logging.error("❌ Aucun fichier trouvé dans le bucket 'curated-data'.")
+            return
+
+        # Sélection du fichier le plus récent basé sur la date de modification
+        latest_file = max(response['Contents'], key=lambda x: x['LastModified'])
+        file_key = latest_file['Key']
+        
+        logging.info(f"📄 Chargement du fichier : {file_key} ({latest_file['LastModified']})")
+        
+        obj = s3_client.get_object(Bucket="curated-data", Key=file_key)
         df = pd.read_csv(BytesIO(obj['Body'].read()))
-        logging.info(f"📄 CSV chargé : {len(df)} lignes à traiter.")
+        
+        logging.info(f"✅ CSV chargé : {len(df)} lignes à traiter.")
 
         for _, row in df.iterrows():
             # 2. Gérer les Dimensions
@@ -65,10 +82,12 @@ def run_export():
             exists = session.query(FactJobs).filter_by(url=row['url']).first()
             if not exists:
                 new_job = FactJobs(
-                    title=row['job_title'],  # <--- Correction faite ici
+                    title=row['job_title'],
                     description=row.get('description', ''),
                     salary_min=row.get('salary_min', 0),
                     salary_max=row.get('salary_max', 0),
+                    experience_level=row.get('experience_level'),
+                    contract_type=row.get('contract_type'),
                     source=row.get('source', 'unknown'),
                     url=row['url'],
                     company_id=company.company_id,

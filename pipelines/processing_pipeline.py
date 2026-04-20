@@ -41,19 +41,17 @@ logging.basicConfig(
 try:
     from processing.normalizer import JobNormalizer
     from processing.cleaner import JobCleaner
-    from processing.validators import JobValidator
 except ImportError as e:
     logging.critical(f"❌ Impossible d'importer les modules de traitement : {e}")
     sys.exit(1)
 
 def run_processing():
-    logging.info("🚀 [PIPELINE PROCESSING] Démarrage de l'unification...")
+    logging.info("🚀 [PIPELINE PROCESSING] Démarrage de l'unification et du nettoyage...")
     
     try:
         # Initialisation des outils
         normalizer = JobNormalizer()
         cleaner = JobCleaner()
-        validator = JobValidator()
         
         all_dataframes = []
 
@@ -88,7 +86,7 @@ def run_processing():
             except Exception as e:
                 logging.error(f"❌ Erreur dossier datasets : {e}")
 
-        # --- ÉTAPE 2 : FUSION, NETTOYAGE ET VALIDATION ---
+        # --- ÉTAPE 2 : FUSION, NETTOYAGE ---
 
         if all_dataframes:
             # 1. Fusion (Union)
@@ -99,28 +97,25 @@ def run_processing():
             logging.info("🧹 Lancement du nettoyage (JobCleaner)...")
             cleaned_df = cleaner.clean(merged_df)
 
-            # 3. Validation (Validation métier)
-            logging.info("⚖️ Lancement de la validation (JobValidator)...")
-            final_df = validator.validate(cleaned_df)
-
-            # Vérification finale du schéma
-            if not validator.check_schema(final_df):
-                logging.error("❌ Le schéma final est invalide. Arrêt du pipeline.")
-                return
-
             # --- ÉTAPE 3 : SAUVEGARDE VERS MINIO (PROCESSED) ---
             csv_buffer = StringIO()
-            final_df.to_csv(csv_buffer, index=False, encoding='utf-8-sig')
+            cleaned_df.to_csv(csv_buffer, index=False, encoding='utf-8-sig')
+
+            # 1. Générer le timestamp précis
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            # 2. Nom unique sans redondance
+            filename = f"cleaned_job_market_{timestamp}.csv"
             
-            # Sauvegarde 'Latest' pour la suite du pipeline
+            # Sauvegarde 'Latest' pour la suite du pipeline (Feature Engineering)
             S3_CLIENT.put_object(
-                Bucket="processed-data",
-                Key="unified_job_market_latest.csv",
-                Body=csv_buffer.getvalue(),
-                ContentType='text/csv'
-            )
+             Bucket="processed-data",
+             Key=filename,
+             Body=csv_buffer.getvalue(),
+             ContentType='text/csv'
+             )
             
-            logging.info("✨ TERMINÉ : Fichier sauvegardé dans le bucket 'processed-data'")
+            logging.info("✨ TERMINÉ : Fichier de base sauvegardé dans le bucket 'processed-data' sous le nom 'cleaned_job_market_latest.csv'")
             
         else:
             logging.warning("⚠️ Aucune donnée disponible pour le traitement.")

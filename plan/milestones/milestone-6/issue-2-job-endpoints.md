@@ -4,5 +4,5 @@
 Implement endpoints to interact with the Job Database (GET, search, filter).
 
 **Acceptance Criteria:**
-- [ ] `/jobs/` returning paginated jobs
-- [ ] Pydantic Schemas updated
+- [x] `/jobs/` returning paginated jobs
+- [x] Pydantic Schemas updated

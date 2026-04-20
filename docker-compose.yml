@@ -25,6 +25,7 @@ services:
       done;
       /usr/bin/mc mb myminio/raw-data || true;
       /usr/bin/mc mb myminio/processed-data || true;
+      /usr/bin/mc mb myminio/curated-data || true;
       echo '🚀 Buckets créés avec succès !';
       exit 0;
       "
@@ -53,7 +54,18 @@ services:
       - "5050:80"  # <--- Tu accèderas à l'interface sur http://localhost:5050
     depends_on:
       - postgres_dw
-
+  # --- AIRFLOW : Initialisation de la base et création de l'admin ---
+  airflow-init:
+    image: apache/airflow:2.7.0
+    depends_on:
+      - airflow_db
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow_db/airflow_db
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com
+      "
   # --- AIRFLOW : Base de données interne ---
   airflow_db:
     image: postgres:15
@@ -65,9 +77,13 @@ services:
   # --- AIRFLOW : Webserver (L'interface pour voir tes DAGs) ---
   airflow_webserver:
     image: apache/airflow:2.7.0
-    command: webserver
+    command: >
+      bash -c "pip install selenium webdriver-manager beautifulsoup4 requests boto3 pandas psycopg2-binary sqlalchemy && airflow webserver"
     depends_on:
-      - airflow_db
+      airflow_db:
+        condition: service_started
+      airflow-init:
+        condition: service_completed_successfully
     ports:
       - "8080:8080"
     volumes:
@@ -76,25 +92,41 @@ services:
       - ./pipelines:/opt/airflow/pipelines
       - ./processing:/opt/airflow/processing
       - ./data:/opt/airflow/data
+      - ./scraping:/opt/airflow/scraping
+      - ./database:/opt/airflow/database
+      - ./config:/opt/airflow/config
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow_db/airflow_db
-      - _PIP_ADDITIONAL_DEPENDENCIES=pandas sqlalchemy psycopg2-binary
+      - _PIP_ADDITIONAL_DEPENDENCIES=pandas sqlalchemy psycopg2-binary boto3 selenium webdriver-manager beautifulsoup4 requests
+      - PYTHONPATH=/opt/airflow
+      - MINIO_ENDPOINT_URL=http://minio-job:9000
+      - DATABASE_URL=postgresql://user_dw:password_dw@postgres_dw:5432/job_data_warehouse
 
   # --- AIRFLOW : Scheduler (Celui qui lance les scripts) ---
   airflow_scheduler:
     image: apache/airflow:2.7.0
-    command: scheduler
+    command: >
+      bash -c "pip install selenium webdriver-manager beautifulsoup4 requests boto3 pandas psycopg2-binary sqlalchemy && airflow scheduler"
     depends_on:
-      - airflow_db
+      airflow_db:
+        condition: service_started
+      airflow-init:
+        condition: service_completed_successfully
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./pipelines:/opt/airflow/pipelines
       - ./processing:/opt/airflow/processing
       - ./data:/opt/airflow/data
+      - ./scraping:/opt/airflow/scraping
+      - ./database:/opt/airflow/database
+      - ./config:/opt/airflow/config
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow_db/airflow_db
-      - _PIP_ADDITIONAL_DEPENDENCIES=pandas sqlalchemy psycopg2-binary
+      - _PIP_ADDITIONAL_DEPENDENCIES=pandas sqlalchemy psycopg2-binary boto3 selenium webdriver-manager beautifulsoup4 requests
+      - PYTHONPATH=/opt/airflow
+      - MINIO_ENDPOINT_URL=http://minio-job:9000
+      - DATABASE_URL=postgresql://user_dw:password_dw@postgres_dw:5432/job_data_warehouse
 
 volumes:
   dw_data:
