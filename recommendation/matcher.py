@@ -1,4 +1,7 @@
-import spacy
+try:
+    import spacy
+except ImportError:
+    spacy = None
 import torch
 from .embeddings import EmbeddingManager
 from .cosine_similarity import compute_similarity
@@ -18,10 +21,10 @@ class JobMatcher:
                 self.nlp = spacy.load("en_core_web_sm")
             except:
                 self.nlp = None
-                print("⚠️ Warning: spaCy n'a pas pu être chargé.")
+                print("Warning: spaCy n'a pas pu être chargé.")
 
     def precompute_corpus(self, corpus_texts):
-        print(f"🔄 Encodage sémantique de {len(corpus_texts)} offres...")
+        print(f"Encodage sémantique de {len(corpus_texts)} offres...")
         self.corpus_embeddings = self.emb_manager.encode_text(corpus_texts)
         return self.corpus_embeddings
 
@@ -39,7 +42,7 @@ class JobMatcher:
         
         # 3. Sécurité pour le corpus
         if self.corpus_embeddings is None:
-            print("⚠️ Warning: Corpus non pré-calculé...")
+            print("Warning: Corpus non pré-calculé...")
             corpus_texts = offers_df['combined_features'].tolist()
             self.corpus_embeddings = self.emb_manager.encode_text(corpus_texts)
         
@@ -56,7 +59,7 @@ class JobMatcher:
         # ---------------
 
         # 5. ÉTAPE 2: Re-ranking (Cross-Encoder) - D9IQA
-        print(f"🧐 Re-ranking des 50 meilleurs candidats pour : '{query}'")
+        print(f"Re-ranking des 50 meilleurs candidats pour : '{query}'")
         pairs = [[query, doc] for doc in top_50['combined_features'].tolist()]
         
         # Le Cross-Encoder prédit la pertinence réelle

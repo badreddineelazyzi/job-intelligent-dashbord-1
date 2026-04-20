@@ -56,6 +56,9 @@ class FactJobs(Base):
     location_id = Column(Integer, ForeignKey('dim_location.location_id'))
     category_id = Column(Integer, ForeignKey('dim_category.category_id'))
     date_id = Column(Integer, ForeignKey('dim_time.date_id'))
-
-    # Relations Many-to-Many
+    # Relationships
+    company = relationship("DimCompany", backref="jobs")
+    location = relationship("DimLocation", backref="jobs")
+    category = relationship("DimCategory", backref="jobs")
+        # Relations Many-to-Many
     skills = relationship('DimSkills', secondary=job_skills, backref='jobs')

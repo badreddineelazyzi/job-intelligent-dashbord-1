@@ -13,7 +13,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from database.db_session import engine
-from database.models import FactJobs, DimCompany, DimLocation, DimTime, DimCategory, DimSkills
+from database.models import Base, FactJobs, DimCompany, DimLocation, DimTime, DimCategory, DimSkills
 
 # Configuration Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,6 +32,9 @@ def get_or_create(session, model, **kwargs):
     return instance
 
 def run_export():
+    from database.models import Base
+    from database.db_session import engine
+    Base.metadata.create_all(bind=engine)
     logging.info("📤 [EXPORT PIPELINE] Début de l'export vers PostgreSQL...")
     
     Session = sessionmaker(bind=engine)

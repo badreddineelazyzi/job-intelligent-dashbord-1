@@ -1,0 +1,48 @@
+graph TD
+    %% Define Nodes
+    subgraph "Data Sources (Web & APIs)"
+        WS1[LinkedIn Scraper]
+        WS2[Indeed Scraper]
+        API1[Adzuna API]
+        API2[Jooble API]
+    end
+
+    subgraph "Airflow Orchestration"
+        DAG1[ingest_dag]
+        DAG2[clean_dag]
+        DAG3[export_dag]
+    end
+
+    subgraph "Data Storage"
+        RawDB[(Raw JSON/CSV)]
+        Postgres[(PostgreSQL)]
+    end
+
+    subgraph "Processing & ML"
+        Cleaner(Data Cleaning)
+        FeatureEng(Feature Engineering)
+        RecEngine(NLP/Recommendation Engine)
+    end
+
+    subgraph "Serving Layer"
+        FastAPI[FastAPI Server]
+        PowerBI[Power BI Dashboard]
+    end
+
+    %% Define Flow
+    WS1 --> |Raw Data| DAG1
+    WS2 --> |Raw Data| DAG1
+    API1 --> |Raw Data| DAG1
+    API2 --> |Raw Data| DAG1
+    
+    DAG1 --> RawDB
+    RawDB --> DAG2
+    DAG2 --> Cleaner
+    Cleaner --> FeatureEng
+    FeatureEng --> Postgres
+    
+    Postgres --> RecEngine
+    RecEngine --> Postgres
+    
+    Postgres --> FastAPI
+    Postgres --> PowerBI

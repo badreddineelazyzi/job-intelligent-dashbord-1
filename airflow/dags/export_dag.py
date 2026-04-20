@@ -9,6 +9,7 @@ from airflow.operators.python import PythonOperator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from pipelines.export_pipeline import run_export
+from database.init_db import init_database
 
 default_args = {
     "owner": "data-team",
@@ -29,9 +30,14 @@ with DAG(
     tags=["database", "export", "milestone-4"],
 ) as dag:
     
+    check_schema_task = PythonOperator(
+        task_id="check_and_create_tables",
+        python_callable=init_database,
+    )
+
     export_to_db_task = PythonOperator(
         task_id="export_processed_to_postgres",
         python_callable=run_export,
     )
 
-    export_to_db_task
+    check_schema_task >> export_to_db_task

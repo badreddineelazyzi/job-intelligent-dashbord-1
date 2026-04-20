@@ -20,7 +20,17 @@ s3 = boto3.client('s3',
 def load_real_data_from_minio(bucket_name):
     print(f"📥 Lecture du fichier CSV depuis le bucket : {bucket_name}")
     try:
-        file_key = 'final_features_job_market_latest.csv'
+        # Dynamically find the latest CSV file
+        objects = s3.list_objects_v2(Bucket=bucket_name, Prefix='final_features_job_market_')
+        if 'Contents' not in objects:
+            print(f"❌ Aucun fichier trouvé avec le préfixe 'final_features_job_market_' dans {bucket_name}")
+            return pd.DataFrame()
+            
+        # Sort objects by last modified date and get the latest one
+        latest_file = sorted(objects['Contents'], key=lambda obj: obj['LastModified'], reverse=True)[0]
+        file_key = latest_file['Key']
+        print(f"📄 Fichier le plus récent trouvé : {file_key}")
+        
         obj = s3.get_object(Bucket=bucket_name, Key=file_key)
         raw_data = obj['Body'].read().decode('utf-8')
         
@@ -36,7 +46,7 @@ def load_real_data_from_minio(bucket_name):
         return pd.DataFrame()
 
 # --- CONFIGURATION ---
-MODEL_PATH = "./model_final"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "model_final")
 
 # --- 1. CHARGEMENT ET PRÉPARATION ---
 df_reel = load_real_data_from_minio('curated-data')
