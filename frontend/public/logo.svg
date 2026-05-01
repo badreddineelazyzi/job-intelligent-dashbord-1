@@ -1,0 +1,17 @@
+export default function Logo() {
+  return (
+    <div className="flex items-center gap-3">
+      {/* L'icône carrée bleue */}
+      <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+        <span className="text-white text-2xl font-black font-sans">
+          J
+        </span>
+      </div>
+      
+      {/* Le texte à côté */}
+      <span className="text-2xl font-bold text-[#1e3a8a] tracking-tight">
+        Job Intelligent
+      </span>
+    </div>
+  );
+}

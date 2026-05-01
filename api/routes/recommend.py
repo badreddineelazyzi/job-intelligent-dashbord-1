@@ -3,7 +3,6 @@ from api.services.recommendation_service import recommender
 from typing import List, Dict, Any
 
 router = APIRouter(
-    prefix="/recommend",
     tags=["Recommendations"]
 )
 

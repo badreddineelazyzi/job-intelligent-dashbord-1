@@ -15,3 +15,8 @@ datasets
 accelerate>=1.1.0
 fastapi
 uvicorn
+passlib[bcrypt] 
+python-jose[cryptography] 
+python-multipart
+pydantic[email]
+bcrypt<4.0
