@@ -6,14 +6,9 @@ import SearchBar from '../components/SearchBar';
 import FilterPanel from '../components/FilterPanel';
 import Pagination from '../components/Pagination';
 import JobCard from '../components/JobCard';
-import { jobsAPI, searchHistoryAPI } from '../services/api'; // Ajout de searchHistoryAPI
+import { jobsAPI, searchHistoryAPI, statsAPI } from '../services/api';
 
-const STATS = [
-  { label: 'Offres', value: '1,240+', icon: Briefcase },
-  { label: 'Entreprises', value: '450+', icon: Building2 },
-  { label: 'Taux Match', value: '98%', icon: TrendingUp },
-  { label: 'Sources', value: '3', icon: Zap },
-];
+
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
@@ -23,6 +18,41 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({});
   const itemsPerPage = 20;
+
+  const [realStats, setRealStats] = useState([
+    { label: 'Offres', value: '...', icon: Briefcase, key: 'total_jobs' },
+    { label: 'Entreprises', value: '...', icon: Building2, key: 'total_companies' },
+    { label: 'Taux Match', value: '...', icon: TrendingUp, key: 'avg_match' },
+    { label: 'Sources', value: '...', icon: Zap, key: 'total_sources' },
+  ]);
+
+  useEffect(() => {
+    fetchJobs(0, searchQuery, filters);
+    fetchRealStats(); // Appel des stats au chargement
+  }, [searchQuery, filters]);
+
+  const fetchRealStats = async () => {
+    try {
+      const response = await statsAPI.getStatsSummary();
+      const data = response.data;
+
+      // Mise à jour des valeurs dans l'objet STATS
+      setRealStats(prev => prev.map(stat => ({
+        ...stat,
+        value: formatStatValue(stat.key, data[stat.key])
+      })));
+    } catch (error) {
+      console.error('Erreur stats:', error);
+    }
+  };
+
+  // Utilitaire pour formater les nombres (ex: 1200 -> 1.2k)
+  const formatStatValue = (key, value) => {
+    if (!value) return '0';
+    if (key === 'avg_match') return `${value}%`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}k+`;
+    return value;
+  };
 
   // Chargement initial et réaction aux filtres
   useEffect(() => {
@@ -101,10 +131,11 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
+      {/* Stats Section utilisant realStats */}
       <section className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {STATS.map((stat, index) => {
+            {realStats.map((stat, index) => {
               const Icon = stat.icon;
               return (
                 <div key={index} className="text-center">
@@ -113,7 +144,12 @@ export default function Home() {
                       <Icon className="text-primary" size={24} />
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-text">{stat.value}</p>
+                  {/* Affichage d'un squelette si la donnée est en cours de chargement */}
+                  <p className="text-3xl font-bold text-text">
+                    {stat.value === '...' ? (
+                      <span className="animate-pulse">---</span>
+                    ) : stat.value}
+                  </p>
                   <p className="text-text-secondary mt-2">{stat.label}</p>
                 </div>
               );

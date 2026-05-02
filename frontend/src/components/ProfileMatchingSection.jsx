@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { authAPI, jobsAPI } from '../services/api';
 import JobCard from './JobCard'; // ← Import du vrai JobCard
 import MatchScore from './MatchScore';
 import { ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  Target, 
+  User, 
+  FileText,  
+  CheckCircle2, 
+  UploadCloud 
+} from 'lucide-react';
 
 export default function ProfileMatchingSection() {
   const { user } = useAuth();
@@ -15,6 +22,7 @@ export default function ProfileMatchingSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [detectedSkills, setDetectedSkills] = useState([]);
+  const navigate = useNavigate();
   
   // ─── DETECTION DES SKILLS ─────────────────────────────
   const parseSkills = (skillsData) => {
@@ -121,7 +129,8 @@ export default function ProfileMatchingSection() {
       {/* Header */}
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          🎯 Matching Intelligent
+            <Target className="text-blue-600" size={28} />
+           Matching Intelligent
         </h2>
         <p className="text-gray-600 max-w-lg mx-auto">
           Utilisez notre système pour matcher votre profil avec les meilleures offres.
@@ -136,7 +145,8 @@ export default function ProfileMatchingSection() {
             activeTab === 'profile' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          📋 Par profil
+            <User size={18} />
+           Par profil
         </button>
         <button
           onClick={() => { setActiveTab('cv'); setMatchingResults([]); setError(''); }}
@@ -144,7 +154,9 @@ export default function ProfileMatchingSection() {
             activeTab === 'cv' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          📄 Par CV
+           
+           <FileText size={18} />
+           Par CV
         </button>
       </div>
 
@@ -166,6 +178,7 @@ export default function ProfileMatchingSection() {
                 {profileStatus.missing.map(field => (
                   <li key={field} className="flex items-center gap-2 text-sm text-amber-800">
                     <span className="w-2 h-2 bg-amber-500 rounded-full" />
+                    <AlertCircle size={14} className="text-amber-500" />
                     {field === 'title' && 'Titre du poste recherché'}
                     {field === 'skills' && 'Compétences clés'}
                     {field === 'location' && 'Localisation souhaitée'}
@@ -174,11 +187,18 @@ export default function ProfileMatchingSection() {
                   </li>
                 ))}
               </ul>
-              <Link to="/complete-profile" className="inline-block px-4 py-2 bg-amber-600 text-white rounded-lg">Compléter mon profil →</Link>
+              <button 
+  type="button"
+  onClick={() => navigate('/dashboard', { state: { openEditProfile: true } })}
+  className="inline-block px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors relative z-10"
+>
+  Compléter mon profil →
+</button>
             </div>
           ) : (
             <div className="text-center">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <CheckCircle2 className="text-green-600" size={20} />
                 <p className="text-green-800">✓ Profil complet !</p>
               </div>
               <button
@@ -186,7 +206,7 @@ export default function ProfileMatchingSection() {
                 disabled={loading}
                 className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
               >
-                {loading ? 'Analyse...' : '🚀 Lancer le matching'}
+                {loading ? 'Analyse...' : ' Lancer le matching'}
               </button>
             </div>
           )}
@@ -210,12 +230,12 @@ export default function ProfileMatchingSection() {
                 <label htmlFor="cv-matching-upload" className="cursor-pointer block">
                   {cvFile ? (
                     <div>
-                      <div className="text-4xl mb-2">✅</div>
+                      <CheckCircle2 className="mx-auto text-green-500 mb-2" size={48} />
                       <p className="font-medium text-green-900">{cvFile.name}</p>
                     </div>
                   ) : (
                     <div>
-                      <div className="text-4xl mb-2">📄</div>
+                      <UploadCloud className="mx-auto text-gray-400 mb-2" size={48} />
                       <p className="font-medium text-gray-900">Glissez votre CV ou cliquez</p>
                       <p className="text-sm text-gray-500">PDF, DOC, DOCX</p>
                     </div>
@@ -238,7 +258,7 @@ export default function ProfileMatchingSection() {
       {matchingResults.length > 0 && (
         <div className="mt-6 border-t pt-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            🏆 {matchingResults.length} offre{matchingResults.length > 1 ? 's' : ''} trouvée{matchingResults.length > 1 ? 's' : ''}
+             {matchingResults.length} offre{matchingResults.length > 1 ? 's' : ''} trouvée{matchingResults.length > 1 ? 's' : ''}
           </h3>
           
           {/* Debug temporaire */}

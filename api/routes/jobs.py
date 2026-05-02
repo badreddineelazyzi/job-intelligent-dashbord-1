@@ -11,43 +11,72 @@ router = APIRouter(
     tags=["Jobs"]
 )
 
+@router.get("/summary")
+def get_stats_summary(db: Session = Depends(get_db)):
+    # 1. Nombre total d'offres (total_jobs)
+    total_jobs = db.query(FactJobs).count()
+    
+    # 2. Nombre d'entreprises distinctes (total_companies)
+    # On passe par la table de dimension DimCompany
+    total_companies = db.query(DimCompany).count()
+    
+    # 3. Nombre de sources différentes (total_sources)
+    # La colonne 'source' est directement dans FactJobs
+    total_sources = db.query(func.count(func.distinct(FactJobs.source))).scalar() or 0
+    
+    # 4. Taux de Match Moyen (avg_match)
+    # Si tu n'as pas encore de colonne match_score, on peut simuler 
+    # ou compter le nombre moyen de compétences par offre
+    avg_match = 85.5  # Valeur statique en attendant ton moteur NLP
+
+    # CRITIQUE : Les clés ici doivent correspondre EXACTEMENT aux 'key' de ton Home.jsx
+    return {
+        "total_jobs": total_jobs,
+        "total_companies": total_companies,
+        "avg_match": avg_match,
+        "total_sources": total_sources
+    }
+
 @router.get("/", response_model=PaginatedJobsResponse)
 def get_jobs(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     query: Optional[str] = None,
-    # --- Nouveaux paramètres de filtres ---
     location: Optional[str] = None,
     contract_type: Optional[str] = None,
     experience: Optional[str] = None,
-    # --------------------------------------
     db: Session = Depends(get_db)
 ):
     try:
-        # On commence par une jointure si tes filtres sont dans d'autres tables (ex: DimLocation)
+        # 1. Utiliser base_query de manière dynamique
         base_query = db.query(FactJobs)
+
+        # 2. Filtre par texte - Uniquement si la string n'est pas vide
+        if query and query.strip():
+            base_query = base_query.filter(FactJobs.title.ilike(f"%{query.strip()}%"))
+            
+        # 3. Filtre par Localisation (Jointure explicite)
+        if location and location.strip():
+            # Utilisation de join() sur la relation ou le modèle
+            base_query = base_query.join(DimLocation).filter(
+                DimLocation.city.ilike(f"%{location.strip()}%")
+            )
+
+        # 4. Filtre par Type de Contrat
+        if contract_type and contract_type.strip():
+            base_query = base_query.filter(FactJobs.contract_type == contract_type.strip())
+
+        # 5. Filtre par Expérience
+        if experience and experience.strip():
+            base_query = base_query.filter(FactJobs.experience_level == experience.strip())
+            
+        # --- Exécution ---
         
-        # 1. Filtre par texte (Recherche)
-        if query:
-            base_query = base_query.filter(FactJobs.title.ilike(f"%{query}%"))
-            
-        # 2. Filtre par Localisation
-        if location:
-            # Si la localisation est dans une table liée DimLocation :
-            base_query = base_query.join(DimLocation).filter(DimLocation.city.ilike(f"%{location}%"))
-            # Note : Si 'location' est directement dans FactJobs, utilise :
-            # base_query = base_query.filter(FactJobs.location.ilike(f"%{location}%"))
-
-        # 3. Filtre par Type de Contrat
-        if contract_type:
-            base_query = base_query.filter(FactJobs.contract_type == contract_type)
-
-        # 4. Filtre par Expérience
-        if experience:
-            base_query = base_query.filter(FactJobs.experience_level == experience)
-            
+        # Le count() doit être fait APRES les filtres
         total = base_query.count()
-        jobs = base_query.offset(skip).limit(limit).all()
+        
+        # Tri descendant pour avoir les nouveautés en premier
+        jobs = base_query.order_by(FactJobs.job_id.desc()).offset(skip).limit(limit).all()
         
         return PaginatedJobsResponse(
             total=total,
@@ -57,11 +86,11 @@ def get_jobs(
         )
         
     except Exception as e:
-        print(f"Erreur Backend: {str(e)}") # Log pour le debug
-        raise HTTPException(status_code=500, detail=str(e))
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"❌ ERREUR BACKEND: {str(e)}") 
+        raise HTTPException(status_code=500, detail="Erreur lors du filtrage des offres.")
+
+
+
 
 @router.get("/{job_id}", response_model=JobResponse)
 def get_job_by_id(job_id: int, db: Session = Depends(get_db)):
@@ -69,3 +98,5 @@ def get_job_by_id(job_id: int, db: Session = Depends(get_db)):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+

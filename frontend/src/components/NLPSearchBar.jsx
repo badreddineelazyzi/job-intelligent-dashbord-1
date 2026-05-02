@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Mic } from 'lucide-react';
+import { Search, Mic, MicOff } from 'lucide-react';
 
 const SUGGESTIONS = [
   'Data Scientist Python',
@@ -15,6 +15,53 @@ export default function NLPSearchBar({ onSubmit, placeholder = "Décrivez le pos
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState(SUGGESTIONS);
   const navigate = useNavigate();
+  const [isListening, setIsListening] = useState(false);
+   
+
+  // --- Logique de Reconnaissance Vocale ---
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false; // Gardez ceci à false
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setQuery(transcript); // Remplit la barre avec ce qui a été dit
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event) => {
+  setIsListening(false);
+  console.error("Erreur Speech Recognition:", event.error); // Regardez votre console F12
+  
+  if (event.error === 'not-allowed') {
+    alert("Accès au micro refusé. Veuillez l'autoriser dans les réglages du navigateur.");
+  } else if (event.error === 'no-speech') {
+    alert("Aucune voix détectée. Réessayez.");
+  } else {
+    alert(`Erreur technique : ${event.error}`);
+  }
+};
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+  // ----------------------------------------
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,10 +90,11 @@ export default function NLPSearchBar({ onSubmit, placeholder = "Décrivez le pos
           />
           <button
             type="button"
-            className="p-3 text-text-secondary hover:text-primary transition"
+            onClick={handleVoiceSearch}
+            className={`p-3 transition ${isListening ? 'text-danger' : 'text-text-secondary hover:text-primary'}`}
             title="Recherche vocale"
           >
-            <Mic size={20} />
+            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
           <button
             type="submit"

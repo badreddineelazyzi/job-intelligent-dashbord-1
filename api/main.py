@@ -1,6 +1,8 @@
 import sys
 import os
 
+
+
 # Ajoute le dossier parent au path (racine du projet)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -33,12 +35,14 @@ app.add_middleware(
 from api.routes import auth, jobs, favorites, search_history
 from api.routes import recommend
 
+
 # main.py
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(jobs.router, prefix="/jobs", tags=["Jobs"]) # Ajoute /jobs
+app.include_router(jobs.router, prefix="/jobs", tags=["Jobs"])
 app.include_router(recommend.router, prefix="/recommend", tags=["Recommend"])
 app.include_router(favorites.router, prefix="/favorites", tags=["Favorites"])
 app.include_router(search_history.router, prefix="/search-history", tags=["History"])
+
 
 @app.get("/", tags=["Root"])
 def root():

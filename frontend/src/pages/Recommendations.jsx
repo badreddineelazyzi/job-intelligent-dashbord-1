@@ -51,7 +51,7 @@ export default function Recommendations() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        <div className="mb-12">
+        <div className="mb-12 flex flex-col items-center text-center">
           <h1 className="text-4xl font-bold text-text mb-4">
             Recommandations personnalisées
           </h1>
@@ -61,9 +61,11 @@ export default function Recommendations() {
             </p>
           )}
 
-          <div className="max-w-2xl">
+          <div className="flex justify-center mb-12"> 
+          <div className="w-full max-w-2xl">
             <NLPSearchBar />
           </div>
+</div>
         </div>
 
         {/* Results Section */}

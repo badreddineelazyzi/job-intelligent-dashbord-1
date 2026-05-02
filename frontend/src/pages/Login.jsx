@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -45,10 +45,16 @@ export default function Login() {
       // Vérifier que c'est bien sauvegardé
       const savedToken = localStorage.getItem('token');
       console.log("🔍 Token vérifié après save:", savedToken ? "OUI" : "NON");
-      
-      if (formData.rememberMe) {
-        localStorage.setItem('rememberMe', 'true');
-      }
+
+      // --- LOGIQUE SE SOUVENIR DE MOI ---
+    if (formData.rememberMe) {
+      localStorage.setItem('rememberMe', 'true');
+      localStorage.setItem('userEmail', formData.email); // On stocke l'email
+    } else {
+      localStorage.removeItem('rememberMe');
+      localStorage.removeItem('userEmail');
+    }
+    // ----------------------------------
       
       await login(token);
       navigate('/dashboard');
@@ -59,6 +65,21 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  
+
+  useEffect(() => {
+  const rememberMe = localStorage.getItem('rememberMe') === 'true';
+  const savedEmail = localStorage.getItem('userEmail');
+
+  if (rememberMe && savedEmail) {
+    setFormData(prev => ({
+      ...prev,
+      email: savedEmail,
+      rememberMe: true
+    }));
+  }
+}, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-light to-bg flex items-center justify-center px-4 py-12">

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Heart, Search, Target } from 'lucide-react'; // ← Ajout de Target
+import { Edit2, Heart, Search, Target,MapPin,Building2,Star,History } from 'lucide-react'; // ← Ajout de Target
 import Navbar from '../components/Navbar';
 import ProfileForm from '../components/ProfileForm';
 import JobCard from '../components/JobCard';
 import ProfileMatchingSection from '../components/ProfileMatchingSection'; // ← Nouveau composant
 import { useAuth } from '../hooks/useAuth';
 import { favoritesAPI, searchHistoryAPI } from '../services/api';
+import { useLocation } from 'react-router-dom';
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
@@ -15,6 +16,20 @@ export default function Dashboard() {
   const [searchHistory, setSearchHistory] = useState([]);
   const [isFavoritesLoading, setIsFavoritesLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+
+  const location = useLocation();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  useEffect(() => {
+  // Si on arrive avec l'état "openEditProfile"
+  if (location.state?.openEditProfile) {
+    setActiveTab('profile'); // 1. On force le retour sur l'onglet profil
+    setIsEditingProfile(true); // 2. On active le mode modification (le formulaire)
+    
+    // Nettoyage de l'état pour éviter de boucler au refresh
+    window.history.replaceState({}, document.title);
+  }
+}, [location, setActiveTab, setIsEditingProfile]);
 
   useEffect(() => {
     if (activeTab === 'favorites') {
@@ -168,9 +183,10 @@ export default function Dashboard() {
             {/* ─── CONTENU: FAVORIS ─── */}
             {activeTab === 'favorites' && (
               <div>
-                <h2 className="text-2xl font-bold text-text mb-6">
-                  Mes favoris ⭐
-                </h2>
+                <h2 className="text-2xl font-bold text-text mb-6 flex items-center gap-2">
+                <Star size={24} className="text-yellow-400 fill-yellow-400" /> 
+                <span>Mes favoris</span>
+              </h2>
                 {isFavoritesLoading ? (
                   <div className="text-center py-12">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -188,34 +204,53 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
-                    {favorites.map((job, index) => (
-                      <div key={`${job.job_id}-${index}`} className="p-4 border rounded-lg shadow-sm bg-white">
-                        <h3 className="font-bold text-lg">{job.title}</h3>
-                        <p className="text-gray-600">
-                          🏢 {job.company?.company_name || "Entreprise non spécifiée"}
-                        </p>
-                        <p className="text-gray-500 text-sm">
-                          📍 {job.location ? `${job.location.city}, ${job.location.country}` : "Lieu non spécifié"}
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {job.skills?.map(skill => (
-                            <span key={skill.skill_id} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                              {skill.skill_name}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {favorites.map((job, index) => (
+              <div key={`${job.job_id}-${index}`} className="p-5 border border-slate-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow">
+                
+                {/* Titre du poste */}
+                <h3 className="font-bold text-lg text-slate-900 mb-2">{job.title}</h3>
+                
+                {/* Entreprise avec icône corrigée */}
+                <div className="flex items-center gap-2 text-primary font-medium text-sm mb-1.5">
+                  <Building2 size={16} /> {/* Correction : size sans guillemets */}
+                  <span>{job.company?.company_name || "Entreprise non spécifiée"}</span>
+                </div>
+                
+                {/* Localisation avec icône corrigée */}
+                <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
+                  <MapPin size={16} /> {/* Correction : size sans guillemets */}
+                  <span>
+                    {job.location?.city 
+                      ? `${job.location.city}${job.location.country ? `, ${job.location.country}` : ''}` 
+                      : "Lieu non spécifié"}
+                  </span>
+                </div>
+
+                {/* Badges de compétences */}
+                <div className="flex flex-wrap gap-2">
+                  {job.skills?.map(skill => (
+                    <span 
+                      key={skill.skill_id} 
+                      className="bg-slate-100 text-slate-600 border border-slate-200 text-xs px-2.5 py-1 rounded-full font-medium"
+                    >
+                      {skill.skill_name}
+                    </span>
+                  ))}
+                </div>
+                
               </div>
-            )}
+            ))}
+          </div>
+                          )}
+                        </div>
+                      )}
 
             {/* ─── CONTENU: HISTORIQUE ─── */}
             {activeTab === 'history' && (
               <div>
-                <h2 className="text-2xl font-bold text-text mb-6">
-                  Mon historique 🔍
+                <h2 className="text-2xl font-bold text-text mb-6 flex items-center gap-2">
+                  <History size={24} className="text-blue-600" />
+                  <span>Mon historique</span>
                 </h2>
                 {isHistoryLoading ? (
                   <div className="text-center py-12">

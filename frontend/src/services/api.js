@@ -97,4 +97,9 @@ export const searchHistoryAPI = {
   clearHistory: () => api.delete('/search-history/'),
 };
 
+export const statsAPI = {
+  
+  getStatsSummary: () => api.get('/jobs/summary'),
+};
+
 export default api;

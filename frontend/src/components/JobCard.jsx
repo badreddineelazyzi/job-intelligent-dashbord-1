@@ -111,10 +111,17 @@ export default function JobCard({ job, matchScore, matchedSkills = [], isFavorit
           </div>
           <span className="bg-slate-100 px-2 py-1 rounded">{job.source || 'N/A'}</span>
         </div>
-        <button className="flex items-center gap-1 px-3 py-2 text-primary hover:bg-primary-light rounded-lg transition text-sm font-medium">
-          <Eye size={16} />
-          Voir
-        </button>
+        {job.url && (
+                        <a 
+                          href={job.url.trim()} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-medium"
+                        >
+                          <Eye size={16} />
+                          Voir 
+                        </a>
+                      )}
       </div>
     </div>
   );

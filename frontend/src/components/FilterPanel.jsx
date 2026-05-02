@@ -15,7 +15,7 @@ export default function FilterPanel({ onFilterChange }) {
   const LOCATIONS = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Remote', 'Hybride'];
   const CONTRACT_TYPES = ['CDI', 'CDD', 'Freelance', 'Stage'];
   const EXPERIENCE = ['0-1 ans', '1-3 ans', '3-5 ans', '5-10 ans', '10+ ans'];
-  const SOURCES = ['Indeed', 'LinkedIn', 'France Travail', 'Autres'];
+  const SOURCES = ['Indeed', 'LinkedIn', 'adzuna', 'jobicy','jooble','recrute'];
 
   const handleSkillToggle = (skill) => {
     const newSkills = filters.skills.includes(skill)

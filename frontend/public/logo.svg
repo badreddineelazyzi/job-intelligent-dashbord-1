@@ -1,17 +1,4 @@
-export default function Logo() {
-  return (
-    <div className="flex items-center gap-3">
-      {/* L'icône carrée bleue */}
-      <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-        <span className="text-white text-2xl font-black font-sans">
-          J
-        </span>
-      </div>
-      
-      {/* Le texte à côté */}
-      <span className="text-2xl font-bold text-[#1e3a8a] tracking-tight">
-        Job Intelligent
-      </span>
-    </div>
-  );
-}
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="6" fill="#2563eb"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="900" font-size="20">J</text>
+</svg>
