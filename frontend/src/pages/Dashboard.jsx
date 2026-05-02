@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Heart, Search } from 'lucide-react';
+import { Edit2, Heart, Search, Target } from 'lucide-react'; // ← Ajout de Target
 import Navbar from '../components/Navbar';
 import ProfileForm from '../components/ProfileForm';
 import JobCard from '../components/JobCard';
+import ProfileMatchingSection from '../components/ProfileMatchingSection'; // ← Nouveau composant
 import { useAuth } from '../hooks/useAuth';
 import { favoritesAPI, searchHistoryAPI } from '../services/api';
 
@@ -27,20 +28,9 @@ export default function Dashboard() {
     setIsFavoritesLoading(true);
     try {
       const response = await favoritesAPI.getFavorites();
-      console.log("📋 Réponse favoris API:", response);
-      console.log("📊 Données favoris reçues:", response.data);
-      
-      if (response.data && response.data.length > 0) {
-        console.log("🎁 Premier favori:", response.data[0]);
-        console.log("   - Title:", response.data[0].title);
-        console.log("   - Company:", response.data[0].company);
-        console.log("   - Location:", response.data[0].location);
-      }
-      
       setFavorites(response.data || []);
     } catch (error) {
-      console.error('❌ Erreur lors du chargement des favoris:', error);
-      console.error('   Error response:', error.response?.data);
+      console.error('Erreur favoris:', error);
       setFavorites([]);
     } finally {
       setIsFavoritesLoading(false);
@@ -53,7 +43,7 @@ export default function Dashboard() {
       const response = await searchHistoryAPI.getHistory();
       setSearchHistory(response.data || []);
     } catch (error) {
-      console.error('Erreur lors du chargement de l\'historique:', error);
+      console.error('Erreur historique:', error);
       setSearchHistory([]);
     } finally {
       setIsHistoryLoading(false);
@@ -99,6 +89,7 @@ export default function Dashboard() {
         {/* Tabs */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="flex border-b border-slate-200">
+            {/* ─── ONGLET PROFIL ─── */}
             <button
               onClick={() => {
                 setActiveTab('profile');
@@ -112,6 +103,21 @@ export default function Dashboard() {
             >
               Mon profil
             </button>
+
+            {/* ─── NOUVEL ONGLET: MATCHING ─── */}
+            <button
+              onClick={() => setActiveTab('matching')}
+              className={`flex-1 px-6 py-4 font-medium transition flex items-center justify-center gap-2 ${
+                activeTab === 'matching'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-text-secondary hover:text-text'
+              }`}
+            >
+              <Target size={18} />
+              Matching
+            </button>
+
+            {/* ─── ONGLET FAVORIS ─── */}
             <button
               onClick={() => setActiveTab('favorites')}
               className={`flex-1 px-6 py-4 font-medium transition flex items-center justify-center gap-2 ${
@@ -123,6 +129,8 @@ export default function Dashboard() {
               <Heart size={18} />
               Mes favoris
             </button>
+
+            {/* ─── ONGLET HISTORIQUE ─── */}
             <button
               onClick={() => setActiveTab('history')}
               className={`flex-1 px-6 py-4 font-medium transition flex items-center justify-center gap-2 ${
@@ -138,7 +146,8 @@ export default function Dashboard() {
 
           {/* Tab Content */}
           <div className="p-8">
-            {/* Profile Tab */}
+            
+            {/* ─── CONTENU: PROFIL ─── */}
             {activeTab === 'profile' && (
               <div>
                 <h2 className="text-2xl font-bold text-text mb-6">
@@ -151,13 +160,17 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Favorites Tab */}
+            {/* ─── CONTENU: MATCHING (NOUVEAU) ─── */}
+            {activeTab === 'matching' && (
+              <ProfileMatchingSection />
+            )}
+
+            {/* ─── CONTENU: FAVORIS ─── */}
             {activeTab === 'favorites' && (
               <div>
                 <h2 className="text-2xl font-bold text-text mb-6">
                   Mes favoris ⭐
                 </h2>
-
                 {isFavoritesLoading ? (
                   <div className="text-center py-12">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -175,43 +188,35 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
-                   {favorites.map((job, index) => (
-  <div key={`${job.job_id}-${index}`} className="p-4 border rounded-lg shadow-sm bg-white">
-    {/* 1. Le titre est correct */}
-    <h3 className="font-bold text-lg">{job.title}</h3>
-
-    {/* 2. L'entreprise : il faut aller chercher .company_name dans l'objet .company */}
-    <p className="text-gray-600">
-      🏢 {job.company?.company_name || "Entreprise non spécifiée"}
-    </p>
-
-    {/* 3. Le lieu : il faut utiliser .city ou .country dans l'objet .location */}
-    <p className="text-gray-500 text-sm">
-      📍 {job.location ? `${job.location.city}, ${job.location.country}` : "Lieu non spécifié"}
-    </p>
-
-    {/* 4. Les Skills : schéma Many-to-Many */}
-    <div className="mt-2 flex flex-wrap gap-1">
-      {job.skills?.map(skill => (
-        <span key={skill.skill_id} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-          {skill.skill_name}
-        </span>
-      ))}
-    </div>
-  </div>
-))}
+                    {favorites.map((job, index) => (
+                      <div key={`${job.job_id}-${index}`} className="p-4 border rounded-lg shadow-sm bg-white">
+                        <h3 className="font-bold text-lg">{job.title}</h3>
+                        <p className="text-gray-600">
+                          🏢 {job.company?.company_name || "Entreprise non spécifiée"}
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          📍 {job.location ? `${job.location.city}, ${job.location.country}` : "Lieu non spécifié"}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {job.skills?.map(skill => (
+                            <span key={skill.skill_id} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                              {skill.skill_name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* History Tab */}
+            {/* ─── CONTENU: HISTORIQUE ─── */}
             {activeTab === 'history' && (
               <div>
                 <h2 className="text-2xl font-bold text-text mb-6">
                   Mon historique 🔍
                 </h2>
-
                 {isHistoryLoading ? (
                   <div className="text-center py-12">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -235,9 +240,7 @@ export default function Dashboard() {
                         className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-start hover:bg-slate-100 transition"
                       >
                         <div className="flex-1">
-                          <p className="font-medium text-text">
-                            "{item.query}"
-                          </p>
+                          <p className="font-medium text-text">"{item.query}"</p>
                           <p className="text-sm text-text-secondary mt-1">
                             {item.results_count} résultat{item.results_count > 1 ? 's' : ''} • il y a{' '}
                             {getTimeAgo(item.created_at)}

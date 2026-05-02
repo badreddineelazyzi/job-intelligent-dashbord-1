@@ -70,6 +70,12 @@ export const jobsAPI = {
     api.get(`/jobs/${jobId}`),
   getRecommendations: (query) =>
     api.get('/recommend/', { params: { query } }),
+  getProfileRecommendations: (profileData) =>
+    api.post('/recommend/profile/', profileData),
+  
+  // ─── NOUVEAU : Matching par CV ───
+  getCvRecommendations: (cvText) =>
+    api.post('/recommend/cv/', { cv_text: cvText }),
 };
 
 // Endpoints pour les favoris
