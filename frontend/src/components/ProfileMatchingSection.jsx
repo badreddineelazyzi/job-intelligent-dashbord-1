@@ -272,7 +272,8 @@ export default function ProfileMatchingSection() {
           <div className="space-y-4">
   {matchingResults.map((job, index) => {
     const skills = parseSkills(job.skills);
-    const score = Math.round((job.match_score || 0) * 100);
+    const rawScore = job.match_score || 0;
+    const displayScore = rawScore > 1 ? rawScore : Math.round(rawScore * 100);
 
     return (
       <div key={job.url || index} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -282,7 +283,7 @@ export default function ProfileMatchingSection() {
             <p className="text-primary font-medium text-sm">{job.company}</p>
           </div>
           {/* Ton composant MatchScore */}
-          <MatchScore score={score} />
+          <MatchScore score={rawScore} />
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
@@ -294,7 +295,7 @@ export default function ProfileMatchingSection() {
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-          <span className="text-sm text-slate-500 italic">Score : {score}%</span>
+          <span className="text-sm text-slate-500 italic">Score : {displayScore}%</span>
           {job.url && (
             <a href={job.url.trim()} target="_blank" rel="noopener noreferrer" 
                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium">

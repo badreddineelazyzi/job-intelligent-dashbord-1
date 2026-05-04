@@ -9,13 +9,28 @@ export default function FilterPanel({ onFilterChange }) {
     contractType: [],
     experience: '',
     source: '',
+    category: '',
   });
 
   const SKILLS = ['Python', 'SQL', 'Machine Learning', 'Spark', 'Azure', 'AWS', 'Tableau', 'PowerBI'];
-  const LOCATIONS = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Remote', 'Hybride'];
+  const LOCATIONS = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux'];
   const CONTRACT_TYPES = ['CDI', 'CDD', 'Freelance', 'Stage'];
-  const EXPERIENCE = ['0-1 ans', '1-3 ans', '3-5 ans', '5-10 ans', '10+ ans'];
-  const SOURCES = ['Indeed', 'LinkedIn', 'adzuna', 'jobicy','jooble','recrute'];
+  const SOURCES = ['Indeed', 'LinkedIn', 'adzuna', 'jobicy', 'jooble', 'recrute'];
+  const CATEGORIES = ['Data Engineer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'BI Engineer'];
+
+  // ✅ MAPPING : Tranches d'années -> Catégories en base de données
+  const EXPERIENCE_OPTIONS = [
+  { label: 'Junior (0-2 ans)', value: 'Junior' },
+  { label: 'Mid / Unspecified (2-5 ans)', value: 'Mid/Unspecified' },
+  { label: 'Senior (5+ ans)', value: 'Senior' },
+];
+  // --- Handlers ---
+
+  const handleCategoryChange = (category) => {
+  const newFilters = { ...filters, category };
+  setFilters(newFilters);
+  onFilterChange(newFilters);
+};
 
   const handleSkillToggle = (skill) => {
     const newSkills = filters.skills.includes(skill)
@@ -41,8 +56,11 @@ export default function FilterPanel({ onFilterChange }) {
     onFilterChange(newFilters);
   };
 
-  const handleExperienceChange = (exp) => {
-    const newFilters = { ...filters, experience: exp };
+  // ✅ CORRIGÉ : Envoie les catégories mappées, pas la tranche d'années
+  const handleExperienceChange = (expLabel) => {
+    const mapping = EXPERIENCE_OPTIONS.find(opt => opt.label === expLabel);
+    const categories = mapping ? mapping.value : '';
+    const newFilters = { ...filters, experience: categories };
     setFilters(newFilters);
     onFilterChange(newFilters);
   };
@@ -130,19 +148,20 @@ export default function FilterPanel({ onFilterChange }) {
             </div>
           </div>
 
-          {/* Experience */}
+          {/* ✅ Experience - CORRIGÉ avec mapping */}
           <div>
             <h4 className="font-medium text-text mb-3">Expérience</h4>
             <select
-              value={filters.experience}
+              value={filters.experience ? EXPERIENCE_OPTIONS.find(opt => opt.value === filters.experience)?.label || '' : ''}
               onChange={(e) => handleExperienceChange(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm"
             >
               <option value="">Toutes les expériences</option>
-              {EXPERIENCE.map((exp) => (
-                <option key={exp} value={exp}>{exp}</option>
+              {EXPERIENCE_OPTIONS.map((opt) => (
+                <option key={opt.label} value={opt.label}>{opt.label}</option>
               ))}
             </select>
+            
           </div>
 
           {/* Source */}
@@ -159,6 +178,21 @@ export default function FilterPanel({ onFilterChange }) {
               ))}
             </select>
           </div>
+           {/* Category */}
+          <div>
+            <h4 className="font-medium text-text mb-3">Catégorie</h4>
+            <select
+              value={filters.category}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm"
+            >
+              <option value="">Toutes les catégories</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
 
           {/* Reset Button */}
           <button

@@ -4,8 +4,9 @@ from sqlalchemy import func
 from typing import List, Optional
 
 from database.db_session import get_db
-from database.models import FactJobs, DimCompany, DimLocation, DimSkills
+from database.models import DimCategory, FactJobs, DimCompany, DimLocation, DimSkills
 from api.schemas.job_schema import PaginatedJobsResponse, JobResponse
+from sqlalchemy import func
 
 router = APIRouter(
     tags=["Jobs"]
@@ -45,6 +46,9 @@ def get_jobs(
     location: Optional[str] = None,
     contract_type: Optional[str] = None,
     experience: Optional[str] = None,
+    source: Optional[str] = None,
+    skills: Optional[str] = None, 
+    category: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     try:
@@ -64,11 +68,34 @@ def get_jobs(
 
         # 4. Filtre par Type de Contrat
         if contract_type and contract_type.strip():
-            base_query = base_query.filter(FactJobs.contract_type == contract_type.strip())
+            base_query = base_query.filter(FactJobs.contract_type.ilike(f"%{contract_type.strip()}%"))
 
         # 5. Filtre par Expérience
         if experience and experience.strip():
-            base_query = base_query.filter(FactJobs.experience_level == experience.strip())
+            experience_list = [e.strip() for e in experience.split(',')]
+            base_query = base_query.filter(FactJobs.experience_level.in_(experience_list))
+
+        if source and source.strip():
+            base_query = base_query.filter(FactJobs.source.ilike(f"%{source.strip()}%"))
+
+        if skills and skills.strip():
+            skill_list = [s.strip() for s in skills.split(',') if s.strip()]
+            
+            # Comme location : join sur la table de dimension + filter
+            base_query = base_query.join(DimSkills, FactJobs.skills).filter(
+                func.lower(DimSkills.skill_name).in_([s.lower() for s in skill_list])
+            )
+        
+        if category and category.strip():
+            # Jointure explicite via la clé étrangère
+            base_query = base_query.join(
+                DimCategory, 
+                FactJobs.category_id == DimCategory.category_id
+            ).filter(
+                DimCategory.category_name.ilike(f"%{category.strip()}%")
+            )
+
+    
             
         # --- Exécution ---
         

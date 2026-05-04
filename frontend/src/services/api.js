@@ -54,18 +54,21 @@ export const authAPI = {
 
 // Endpoints pour les offres d'emploi
 export const jobsAPI = {
-  getJobs: (skip = 0, limit = 20, query = '', filters = {}) => {
-    return api.get('/jobs/', { 
-      params: { 
-        skip, 
-        limit, 
-        query,
-        // On "étale" l'objet filters pour que chaque clé devienne un paramètre URL
-        // Exemple: { location: 'Paris' } devient ?location=Paris
-        ...filters 
-      } 
-    });
-  },
+  getJobs: (skip, limit, query, filters) => {
+  return api.get('/jobs/', {
+    params: { 
+      skip, 
+      limit, 
+      query: query || undefined,
+      location: filters?.location || undefined,
+      contract_type: filters?.contractType?.[0] || undefined,
+      experience: filters?.experience || undefined,
+      source: filters?.source || undefined,
+      skills: filters?.skills?.length ? filters.skills.join(',') : undefined,
+      category: filters?.category || undefined,
+    }
+  });
+},
   getJobById: (jobId) =>
     api.get(`/jobs/${jobId}`),
   getRecommendations: (query) =>

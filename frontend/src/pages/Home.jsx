@@ -27,9 +27,10 @@ export default function Home() {
   ]);
 
   useEffect(() => {
-    fetchJobs(0, searchQuery, filters);
-    fetchRealStats(); // Appel des stats au chargement
-  }, [searchQuery, filters]);
+  // On repart à 0 (page 1) dès que la recherche ou les filtres changent
+  fetchJobs(0, searchQuery, filters);
+  fetchRealStats(); 
+}, [searchQuery, filters]);
 
   const fetchRealStats = async () => {
     try {
@@ -54,17 +55,18 @@ export default function Home() {
     return value;
   };
 
-  // Chargement initial et réaction aux filtres
-  useEffect(() => {
-  // On repart à la page 1 (skip = 0) quand les filtres ou la recherche changent
-  fetchJobs(0, searchQuery, filters);
-}, [searchQuery, filters]);
-
+  
   const fetchJobs = async (skip = 0, query = searchQuery, currentFilters = filters) => {
   setIsLoading(true);
   try {
-    // On passe maintenant skip, limit, query ET filters
-    const response = await jobsAPI.getJobs(skip, itemsPerPage, query, currentFilters);
+    const { location, experience, contractType , source ,skills,category } = currentFilters;
+
+    const response = await jobsAPI.getJobs(
+      skip, 
+      itemsPerPage, 
+      query, 
+      { location, contractType, experience, source, skills,category  }
+    );
     
     const jobsData = response.data.data || response.data; 
     setJobs(Array.isArray(jobsData) ? jobsData : []);

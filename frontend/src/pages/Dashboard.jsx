@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Heart, Search, Target,MapPin,Building2,Star,History } from 'lucide-react'; // ← Ajout de Target
+import { Edit2, Heart, Search, Target,MapPin,Building2,Star,History,Trash2 } from 'lucide-react'; // ← Ajout de Target
 import Navbar from '../components/Navbar';
 import ProfileForm from '../components/ProfileForm';
 import JobCard from '../components/JobCard';
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [searchHistory, setSearchHistory] = useState([]);
   const [isFavoritesLoading, setIsFavoritesLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
 
   const location = useLocation();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -51,6 +52,18 @@ export default function Dashboard() {
       setIsFavoritesLoading(false);
     }
   };
+  const handleRemoveFavorite = async (jobId) => {
+  setRemovingId(jobId);
+  try {
+    await favoritesAPI.removeFavorite(jobId);
+    // ✅ Mettre à jour la liste localement sans recharger
+    setFavorites(prev => prev.filter(fav => fav.job_id !== jobId));
+  } catch (error) {
+    console.error('Erreur suppression favori:', error);
+  } finally {
+    setRemovingId(null);
+  }
+ };
 
   const fetchHistory = async () => {
     setIsHistoryLoading(true);
@@ -205,41 +218,59 @@ export default function Dashboard() {
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
             {favorites.map((job, index) => (
-              <div key={`${job.job_id}-${index}`} className="p-5 border border-slate-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow">
-                
-                {/* Titre du poste */}
-                <h3 className="font-bold text-lg text-slate-900 mb-2">{job.title}</h3>
-                
-                {/* Entreprise avec icône corrigée */}
-                <div className="flex items-center gap-2 text-primary font-medium text-sm mb-1.5">
-                  <Building2 size={16} /> {/* Correction : size sans guillemets */}
-                  <span>{job.company?.company_name || "Entreprise non spécifiée"}</span>
-                </div>
-                
-                {/* Localisation avec icône corrigée */}
-                <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
-                  <MapPin size={16} /> {/* Correction : size sans guillemets */}
-                  <span>
-                    {job.location?.city 
-                      ? `${job.location.city}${job.location.country ? `, ${job.location.country}` : ''}` 
-                      : "Lieu non spécifié"}
-                  </span>
-                </div>
+  <div 
+    key={`${job.job_id}-${index}`} 
+    className="p-5 border border-slate-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow relative group"
+  >
+    {/* ✅ BOUTON RETIRER - En haut à droite */}
+    <button
+      onClick={() => handleRemoveFavorite(job.job_id)}
+      disabled={removingId === job.job_id}
+      className="absolute top-3 right-3 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 
+                 rounded-full transition-all duration-200 
+                 opacity-0 group-hover:opacity-100
+                 disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Retirer des favoris"
+    >
+      {removingId === job.job_id ? (
+        <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+      ) : (
+        <Trash2 size={18} />
+      )}
+    </button>
 
-                {/* Badges de compétences */}
-                <div className="flex flex-wrap gap-2">
-                  {job.skills?.map(skill => (
-                    <span 
-                      key={skill.skill_id} 
-                      className="bg-slate-100 text-slate-600 border border-slate-200 text-xs px-2.5 py-1 rounded-full font-medium"
-                    >
-                      {skill.skill_name}
-                    </span>
-                  ))}
-                </div>
-                
-              </div>
-            ))}
+    {/* Titre du poste */}
+    <h3 className="font-bold text-lg text-slate-900 mb-2 pr-10">{job.title}</h3>
+    
+    {/* Entreprise */}
+    <div className="flex items-center gap-2 text-primary font-medium text-sm mb-1.5">
+      <Building2 size={16} />
+      <span>{job.company?.company_name || "Entreprise non spécifiée"}</span>
+    </div>
+    
+    {/* Localisation */}
+    <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
+      <MapPin size={16} />
+      <span>
+        {job.location?.city 
+          ? `${job.location.city}${job.location.country ? `, ${job.location.country}` : ''}` 
+          : "Lieu non spécifié"}
+      </span>
+    </div>
+
+    {/* Badges de compétences */}
+    <div className="flex flex-wrap gap-2">
+      {job.skills?.map(skill => (
+        <span 
+          key={skill.skill_id} 
+          className="bg-slate-100 text-slate-600 border border-slate-200 text-xs px-2.5 py-1 rounded-full font-medium"
+        >
+          {skill.skill_name}
+        </span>
+      ))}
+    </div>
+  </div>
+))}
           </div>
                           )}
                         </div>

@@ -120,43 +120,47 @@ export default function Recommendations() {
 
               <div className="space-y-4">
                 {recommendations.map((item, index) => {
-                  const skills = parseSkills(item.skills);
-                  const score = Math.round((item.match_score || 0) * 100);
-                  
-                  return (
-                    <div 
-                      key={item.url || index} 
-                      className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition p-6"
-                    >
-                      {/* Header */}
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-text mb-1">
-                            {item.job_title || 'Poste non précisé'}
-                          </h3>
-                          <p className="text-sm text-text-secondary">
-                            {item.company || 'Entreprise non précisée'}
-                          </p>
-                        </div>
-                        <MatchScore score={score} />
-                      </div>
+  const skills = parseSkills(item.skills);
+  const rawScore = item.match_score || 0;
+  
+  // ✅ MÊME LOGIQUE EXACTE QUE MatchScore.jsx
+  let normalizedScore = 0;
+  if (typeof rawScore === 'number' && !isNaN(rawScore)) {
+    normalizedScore = rawScore;
+  } else if (typeof rawScore === 'string') {
+    normalizedScore = parseFloat(rawScore) || 0;
+  }
+  if (normalizedScore > 0 && normalizedScore <= 1) {
+    normalizedScore = normalizedScore * 100;
+  }
+  normalizedScore = Math.max(0, Math.min(100, normalizedScore));
 
-                      {/* Skills */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {skills.map((skill, i) => (
-                          <span 
-                            key={i}
-                            className="text-xs px-3 py-1 bg-primary-light text-primary rounded-full"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+  return (
+    <div key={item.url || index} className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition p-6">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-text mb-1">
+            {item.job_title || 'Poste non précisé'}
+          </h3>
+          <p className="text-sm text-text-secondary">
+            {item.company || 'Entreprise non précisée'}
+          </p>
+        </div>
+        <MatchScore score={rawScore} />
+      </div>
 
-                      {/* Score info */}
-                      <div className="mb-4 text-sm text-text-secondary">
-                        Score de matching : <span className="font-semibold text-primary">{score}%</span>
-                      </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {skills.map((skill, i) => (
+          <span key={i} className="text-xs px-3 py-1 bg-primary-light text-primary rounded-full">
+            {skill}
+          </span>
+        ))}
+      </div>
+
+      {/* ✅ Utilise normalizedScore (même logique que MatchScore) */}
+      <div className="mb-4 text-sm text-text-secondary">
+        Score de matching : <span className="font-semibold text-primary">{Math.round(normalizedScore)}%</span>
+      </div>
 
                       {/* Lien */}
                       {item.url && (
