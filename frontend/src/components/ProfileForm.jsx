@@ -7,6 +7,7 @@ export default function ProfileForm({ isEditing, onSubmit }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [skillInput, setSkillInput] = useState('');
+  
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
     title: user?.title || '',
@@ -19,7 +20,6 @@ export default function ProfileForm({ isEditing, onSubmit }) {
     salary_max: user?.salary_max || '',
   });
 
-  const EXPERIENCE_OPTIONS = ['0-1', '1-3', '3-5', '5-10', '10+'];
   const CONTRACT_OPTIONS = ['CDI', 'CDD', 'Freelance', 'Stage'];
 
   const handleChange = (e) => {
@@ -59,11 +59,33 @@ export default function ProfileForm({ isEditing, onSubmit }) {
     setError('');
     setIsLoading(true);
 
+    // 1. Nqiyw l-data w n-qaddou types qbel ma n-siftohom l-FastAPI
+    const dataToSend = { ...formData };
+
+    // Convertir les salaires et l'expérience en Integer (aw null ila kano khawin)
+    dataToSend.salary_min = dataToSend.salary_min ? parseInt(dataToSend.salary_min, 10) : null;
+    dataToSend.salary_max = dataToSend.salary_max ? parseInt(dataToSend.salary_max, 10) : null;
+    dataToSend.experience_years = dataToSend.experience_years ? parseInt(dataToSend.experience_years, 10) : null;
+
     try {
-      await updateProfile(formData);
-      if (onSubmit) onSubmit();
+      // Sifet l-API
+      await updateProfile(dataToSend);
+      if (onSubmit) onSubmit(); 
     } catch (err) {
-      setError(err.response?.data?.detail || 'Erreur lors de la mise à jour du profil');
+      // 2. N-gériw l-erreur bach React ma-y-craché-ch
+      const errorDetail = err.response?.data?.detail;
+      
+      if (Array.isArray(errorDetail)) {
+        const firstError = errorDetail[0];
+        const fieldName = firstError.loc[firstError.loc.length - 1]; 
+        setError(`Erreur f l-champ "${fieldName}": ${firstError.msg}`);
+      } else if (typeof errorDetail === 'string') {
+        setError(errorDetail);
+      } else if (typeof errorDetail === 'object') {
+        setError(JSON.stringify(errorDetail));
+      } else {
+        setError('Erreur lors de la mise à jour du profil');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -210,18 +232,16 @@ export default function ProfileForm({ isEditing, onSubmit }) {
 
       {/* Expérience */}
       <div>
-        <label className="block font-medium text-text mb-2">Expérience</label>
-        <select
+        <label className="block font-medium text-text mb-2">Expérience (en années)</label>
+        <input
+          type="number"
           name="experience_years"
           value={formData.experience_years}
           onChange={handleChange}
+          min="0"
+          placeholder="Ex: 3"
           className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
-        >
-          <option value="">Sélectionner...</option>
-          {EXPERIENCE_OPTIONS.map(exp => (
-            <option key={exp} value={exp}>{exp} ans</option>
-          ))}
-        </select>
+        />
       </div>
 
       {/* Type de contrat */}
@@ -251,6 +271,7 @@ export default function ProfileForm({ isEditing, onSubmit }) {
             name="salary_min"
             value={formData.salary_min}
             onChange={handleChange}
+            placeholder="Ex: 35"
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
           />
         </div>
@@ -261,6 +282,7 @@ export default function ProfileForm({ isEditing, onSubmit }) {
             name="salary_max"
             value={formData.salary_max}
             onChange={handleChange}
+            placeholder="Ex: 45"
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
           />
         </div>

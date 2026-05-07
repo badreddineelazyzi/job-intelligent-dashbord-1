@@ -33,7 +33,8 @@ def get_or_create(session, model, **kwargs):
 
 def run_export():
     from database.models import Base
-    from database.db_session import engine
+    from database.db_session import get_engine
+    engine = get_engine()
     Base.metadata.create_all(bind=engine)
     logging.info("📤 [EXPORT PIPELINE] Début de l'export vers PostgreSQL...")
     

@@ -12,6 +12,8 @@ def init_database():
     print("🎬 Création des tables dans le Data Warehouse...")
     try:
         # Cette ligne crée toutes les tables définies dans models.py
+        from database.db_session import get_engine
+        engine = get_engine()
         Base.metadata.create_all(bind=engine)
         print("🚀 [SUCCESS] Les tables fact_jobs et dimensions ont été créées.")
     except Exception as e:

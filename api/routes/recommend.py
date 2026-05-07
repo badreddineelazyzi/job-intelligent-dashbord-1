@@ -14,12 +14,18 @@ router = APIRouter(tags=["Recommendations"])
 # CHARGEMENT DU MODÈLE (IMPORTANT)
 # ═══════════════════════════════════════════════════════════
 
+import asyncio
+
 @router.on_event("startup")
-def load_ml_model():
-    """ Charge les données et précalcule les vecteurs au démarrage """
-    success = recommender.load_data()
-    if not success:
-        print("❌ Erreur: Le modèle de recommandation n'a pas pu charger les données.")
+async def load_ml_model():
+    """ Charge les données et précalcule les vecteurs au démarrage (en tâche de fond) """
+    def background_load():
+        success = recommender.load_data()
+        if not success:
+            print("❌ Erreur: Le modèle de recommandation n'a pas pu charger les données.")
+            
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, background_load)
 
 
 # ═══════════════════════════════════════════════════════════

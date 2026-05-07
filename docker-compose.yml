@@ -96,6 +96,7 @@ services:
       - ./database:/opt/airflow/database
       - ./config:/opt/airflow/config
     environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow_db/airflow_db
       - _PIP_ADDITIONAL_DEPENDENCIES=pandas sqlalchemy psycopg2-binary boto3 selenium webdriver-manager beautifulsoup4 requests
       - PYTHONPATH=/opt/airflow
@@ -122,6 +123,7 @@ services:
       - ./database:/opt/airflow/database
       - ./config:/opt/airflow/config
     environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_password@airflow_db/airflow_db
       - _PIP_ADDITIONAL_DEPENDENCIES=pandas sqlalchemy psycopg2-binary boto3 selenium webdriver-manager beautifulsoup4 requests
       - PYTHONPATH=/opt/airflow

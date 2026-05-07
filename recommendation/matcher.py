@@ -1,3 +1,4 @@
+import os
 try:
     import spacy
 except ImportError:
@@ -9,7 +10,11 @@ from sentence_transformers import CrossEncoder
 
 class JobMatcher:
     def __init__(self, model_path="./model_final"):
-        self.emb_manager = EmbeddingManager(model_path)
+        if not os.path.exists(model_path):
+            print(f'Warning: {model_path} not found. Falling back to default model.')
+            self.emb_manager = EmbeddingManager()
+        else:
+            self.emb_manager = EmbeddingManager(model_path)
         
         self.cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
         self.corpus_embeddings = None
