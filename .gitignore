@@ -64,6 +64,7 @@ checkpoints/
 .venv/
 recommendation/model_final/
 datasets/
+!datasets/*.csv
 data/
 frontend/node_modules/
 
