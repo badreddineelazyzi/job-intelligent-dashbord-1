@@ -1,0 +1,16 @@
+# Dépendances spécifiques au module SSE
+# Ces dépendances sont déjà dans le requirements.txt principal,
+# mais sont documentées ici pour la clarté
+
+# FastAPI et streaming
+fastapi>=0.104.0
+starlette>=0.27.0
+
+# Async
+asyncio-contextmanager>=1.0.0
+
+# Pydantic pour les modèles
+pydantic>=2.0.0
+
+# Logging
+python-json-logger>=2.0.0

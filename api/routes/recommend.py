@@ -102,15 +102,17 @@ def match_by_profile(
     query = " ".join(filter(None, query_parts))
     
     results = recommender.recommend(query)
+    print(f"📝 Recommender returned {len(results.get('recommendations', []))} jobs")
     
-    # Post-filtrage par salaire et expérience
-    filtered = post_filter_results(results, request)
+    # Post-filtrage par salaire et expérience + TRI
+    filtered_results = post_filter_results(results, request)
+    print(f"📤 Returning {len(filtered_results.get('recommendations', []))} filtered jobs")
     
     return {
         "status": "success",
         "query_used": query,
-        "results_count": len(results),
-        "results": results  ### modif pour retourner les résultats avant filtrage, sinon on perd les scores NLP
+        "results_count": len(filtered_results.get("recommendations", [])),
+        "results": filtered_results  # ✅ Retourne les résultats triés et filtrés
     }
 
 
@@ -136,10 +138,14 @@ def match_by_cv(
     # Le NLP recommender travaille directement sur le texte du CV
     results = recommender.recommend(request.cv_text)
     
+    # Trier les résultats par score de matching (décroissant)
+    if results.get("recommendations"):
+        results["recommendations"].sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    
     return {
         "status": "success",
         "query_used": "cv_parsed_text",
-        "results_count": len(results.get("results", [])),
+        "results_count": len(results.get("recommendations", [])),
         "results": results
     }
 
@@ -149,16 +155,18 @@ def match_by_cv(
 # ═══════════════════════════════════════════════════════════
 
 def post_filter_results(results, request):
-    """Filtre et re-score les résultats par critères durs (salaire, expérience)."""
-    jobs = results.get("results", [])
+    """Filtre et re-score les résultats par critères durs."""
+    # ✅ Accéder à la bonne clé: "recommendations" pas "results"
+    jobs = results.get("recommendations", [])
+    print(f"🔍 post_filter_results: {len(jobs)} jobs avant filtrage")
+    
     filtered = []
     
     for job in jobs:
         score = job.get("match_score", 0)
+        original_score = score
         
-        # Pénalité si salaire trop bas
-        if request.salary_min and job.get("salary_max", 999999) < request.salary_min:
-            score -= 30
+        # ❌ PÉNALITÉ SALAIRE SUPPRIMÉE : tous les salaires sont 0 dans la base
         
         # Boost si localisation match
         if request.location and request.location.lower() in job.get("location", "").lower():
@@ -173,4 +181,13 @@ def post_filter_results(results, request):
     
     # Trier par score décroissant
     filtered.sort(key=lambda x: x["match_score"], reverse=True)
-    return filtered
+    
+    print(f"✅ post_filter_results: {len(filtered)} jobs après filtrage et tri")
+    print(f"📊 Top 3 scores: {[j.get('match_score', 0) for j in filtered[:3]]}")
+    
+    # Retourner la même structure que l'original mais avec recommandations triées/filtrées
+    return {
+        "query": results.get("query", ""),
+        "detected_skills": results.get("detected_skills", []),
+        "recommendations": filtered
+    }

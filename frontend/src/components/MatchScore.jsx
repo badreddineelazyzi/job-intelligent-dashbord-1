@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function MatchScore({ score = 0, size = 48 }) {
-  // 🆕 Normaliser le score (peut être 0.95 ou 95)
+  // 🆕 Normaliser le score (peut être 0.95 ou 95 ou 1.47)
   let normalizedScore = 0;
   
   if (typeof score === 'number' && !isNaN(score)) {
@@ -10,9 +10,14 @@ export default function MatchScore({ score = 0, size = 48 }) {
     normalizedScore = parseFloat(score) || 0;
   }
   
-  // 🆕 Convertir en pourcentage si c'est une valeur décimale (0-1)
+  // 🆕 Si score entre 0 et 1, c'est une probabilité → multiplier par 100
+  // Sinon, c'est déjà un score brut (0-2) → diviser par 2 et multiplier par 100
   if (normalizedScore > 0 && normalizedScore <= 1) {
+    // Score probabilité (0-1)
     normalizedScore = normalizedScore * 100;
+  } else if (normalizedScore > 1) {
+    // Score brut du matcher (0-2) → normaliser en pourcentage (0-100)
+    normalizedScore = (normalizedScore / 2) * 100;
   }
   
   // 🆕 Limiter entre 0 et 100

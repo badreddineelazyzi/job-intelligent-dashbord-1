@@ -16,7 +16,7 @@ export default function FilterPanel({ onFilterChange }) {
   const LOCATIONS = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux'];
   const CONTRACT_TYPES = ['CDI', 'CDD', 'Freelance', 'Stage'];
   const SOURCES = ['Indeed', 'LinkedIn', 'adzuna', 'jobicy', 'jooble', 'recrute'];
-  const CATEGORIES = ['Data Engineer', 'Data Scientist', 'Data Analyst', 'ML Engineer', 'BI Engineer'];
+  const CATEGORIES =  ['Data Science', 'Data Engineering', 'Machine Learning', 'Business Intelligence'];
 
   // ✅ MAPPING : Tranches d'années -> Catégories en base de données
   const EXPERIENCE_OPTIONS = [

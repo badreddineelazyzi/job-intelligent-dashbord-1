@@ -130,8 +130,13 @@ export default function Recommendations() {
   } else if (typeof rawScore === 'string') {
     normalizedScore = parseFloat(rawScore) || 0;
   }
+  
+  // Si score entre 0 et 1, c'est une probabilité → multiplier par 100
+  // Sinon, c'est un score brut (0-2) → diviser par 2 et multiplier par 100
   if (normalizedScore > 0 && normalizedScore <= 1) {
     normalizedScore = normalizedScore * 100;
+  } else if (normalizedScore > 1) {
+    normalizedScore = (normalizedScore / 2) * 100;
   }
   normalizedScore = Math.max(0, Math.min(100, normalizedScore));
 

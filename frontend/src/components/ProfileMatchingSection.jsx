@@ -69,7 +69,16 @@ export default function ProfileMatchingSection() {
         setError(data.message);
         setMatchingResults([]);
       } else {
-        setMatchingResults(data.results?.recommendations || []);
+        // ✅ Accéder à la bonne structure: data.results.recommendations
+        const jobs = data.results?.recommendations || [];
+        console.log('📊 Frontend received jobs:', jobs);
+        console.log('📈 Scores before sort:', jobs.map(j => ({ title: j.job_title, score: j.match_score })));
+        
+        // ✅ Trier par match_score décroissant (double sécurité)
+        const sorted = [...jobs].sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
+        console.log('✅ Scores after sort:', sorted.map(j => ({ title: j.job_title, score: j.match_score })));
+        
+        setMatchingResults(sorted);
       }
     } catch (err) {
       console.error('❌ ERREUR:', err);
@@ -132,7 +141,11 @@ export default function ProfileMatchingSection() {
         if (data.status === 'incomplete_profile') {
           setError(data.message);
         } else {
-          setMatchingResults(data.results?.recommendations || []);
+          // ✅ Accéder à la bonne structure: data.results.recommendations
+          const jobs = data.results?.recommendations || [];
+          // ✅ Trier par match_score décroissant (double sécurité)
+          const sorted = [...jobs].sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
+          setMatchingResults(sorted);
         }
       } else {
         setError('Erreur lors de l\'analyse du CV par l\'IA.');
@@ -327,10 +340,17 @@ export default function ProfileMatchingSection() {
             {matchingResults.map((job, index) => {
               const skills = parseSkills(job.skills);
               const rawScore = job.match_score || 0;
-              const displayScore = rawScore > 1 ? rawScore : Math.round(rawScore * 100);
+              
+              // Normaliser le score comme dans MatchScore.jsx
+              let displayScore = 0;
+              if (rawScore > 0 && rawScore <= 1) {
+                displayScore = Math.round(rawScore * 100);
+              } else if (rawScore > 1) {
+                displayScore = Math.round((rawScore / 2) * 100);
+              }
 
               return (
-                <div key={job.url || index} className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow">
+                <div key={`${index}-${job.job_title}-${job.match_score}`} className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 pr-4">
                       <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{job.job_title}</h3>

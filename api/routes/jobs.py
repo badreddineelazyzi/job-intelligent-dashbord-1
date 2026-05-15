@@ -87,13 +87,9 @@ def get_jobs(
             )
         
         if category and category.strip():
-            # Jointure explicite via la clé étrangère
-            base_query = base_query.join(
-                DimCategory, 
-                FactJobs.category_id == DimCategory.category_id
-            ).filter(
-                DimCategory.category_name.ilike(f"%{category.strip()}%")
-            )
+           base_query = base_query.join(DimCategory, FactJobs.category).filter(
+           DimCategory.category_name.ilike(f"%{category.strip()}%")
+        )
 
     
             
