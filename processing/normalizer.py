@@ -5,7 +5,8 @@ class JobNormalizer:
     def __init__(self):
         self.standard_columns = [
             'job_title', 'company', 'location', 'source', 
-            'url', 'description', 'date_extracted'
+            'url', 'description', 'date_extracted',
+            'salary_min', 'salary_max', 'salary_text', 'category'
         ]
 
     def normalize(self, raw_data):
@@ -24,7 +25,12 @@ class JobNormalizer:
                     'source': source,
                     'url': item.get('link') or item.get('url') or item.get('redirect_url'),
                     'description': item.get('description') or item.get('snippet') or "",
-                    'date_extracted': extraction_date
+                    'date_extracted': extraction_date,
+                    # Preserve salary-related fields when available from source payloads
+                    'salary_min': item.get('salary_min') or item.get('min_salary') or item.get('salaryFrom') or 0,
+                    'salary_max': item.get('salary_max') or item.get('max_salary') or item.get('salaryTo') or 0,
+                    'salary_text': item.get('salary') or item.get('salary_range') or item.get('compensation') or item.get('salaryEstimate') or "",
+                    'category': item.get('category') or item.get('job_type') or item.get('role') or ""
                 })
         return pd.DataFrame(all_jobs)
 
@@ -39,6 +45,17 @@ class JobNormalizer:
         df_norm['url'] = df.get('url') or df.get('link') or "N/A"
         df_norm['description'] = df.get('description') or ""
         df_norm['date_extracted'] = "Dataset_Reference"
+        # Salary/category columns preserved for downstream export to DW
+        df_norm['salary_min'] = df.get('salary_min') or df.get('min_salary') or 0
+        df_norm['salary_max'] = df.get('salary_max') or df.get('max_salary') or 0
+        df_norm['salary_text'] = (
+            df.get('salary')
+            or df.get('salary_range')
+            or df.get('compensation')
+            or df.get('Salary Estimate')
+            or ""
+        )
+        df_norm['category'] = df.get('category') or df.get('job_category') or ""
         
         # On s'assure que toutes les colonnes standard sont présentes
         for col in self.standard_columns:
