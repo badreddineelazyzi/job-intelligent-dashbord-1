@@ -96,6 +96,17 @@ export default function Home() {
         await searchHistoryAPI.addSearch(query);
       } catch (err) {
         console.error("Erreur sauvegarde historique:", err);
+        // Si l'utilisateur n'est pas authentifié (401) ou en cas d'erreur,
+        // sauvegarder localement pour ne pas perdre la recherche.
+        try {
+          const local = JSON.parse(localStorage.getItem('search_history') || '[]');
+          local.unshift({ query, created_at: new Date().toISOString() });
+          // Garder les 50 dernières
+          localStorage.setItem('search_history', JSON.stringify(local.slice(0, 50)));
+          console.debug('Historique local mis à jour');
+        } catch (e) {
+          console.error('Impossible de sauvegarder l\'historique localement', e);
+        }
       }
     }
   };

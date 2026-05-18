@@ -6,6 +6,7 @@ except ImportError:
 import torch
 from .embeddings import EmbeddingManager
 from .cosine_similarity import compute_similarity
+
 from sentence_transformers import CrossEncoder
 
 class JobMatcher:
@@ -16,7 +17,9 @@ class JobMatcher:
         else:
             self.emb_manager = EmbeddingManager(model_path)
         
-        self.cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        # Do not load CrossEncoder at startup — lazy-load on first use to avoid
+        # heavy downloads and long startup times.
+        self.cross_encoder = None
         self.corpus_embeddings = None
         
         try:
@@ -32,6 +35,20 @@ class JobMatcher:
         print(f"Encodage sémantique de {len(corpus_texts)} offres...")
         self.corpus_embeddings = self.emb_manager.encode_text(corpus_texts)
         return self.corpus_embeddings
+
+    def _get_cross_encoder(self):
+        """Lazy-load the CrossEncoder model when needed.
+
+        This avoids downloading/loading large models during app startup.
+        """
+        if self.cross_encoder is None:
+            # ensure HF cache is in project folder to persist between restarts
+            hf_cache = os.path.join(os.getcwd(), ".hf_cache")
+            os.environ.setdefault("HF_HOME", hf_cache)
+            os.environ.setdefault("TRANSFORMERS_CACHE", hf_cache)
+            print("Loading CrossEncoder model (this may take a while)...")
+            self.cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        return self.cross_encoder
 
     def match(self, query, offers_df, top_k=5):
         # 1. Extraction d'entités (Skills)
@@ -67,8 +84,9 @@ class JobMatcher:
         print(f"Re-ranking des 50 meilleurs candidats pour : '{query}'")
         pairs = [[query, doc] for doc in top_50['combined_features'].tolist()]
         
-        # Le Cross-Encoder prédit la pertinence réelle
-        cross_scores = self.cross_encoder.predict(pairs)
+        # Le Cross-Encoder prédit la pertinence réelle (lazy-loaded)
+        cross_encoder = self._get_cross_encoder()
+        cross_scores = cross_encoder.predict(pairs)
         top_50['score'] = cross_scores
         
         # Tri final avec les scores du Cross-Encoder

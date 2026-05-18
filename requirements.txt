@@ -1,5 +1,6 @@
 ﻿requests
 bs4
+python-pptx
 spacy
 selenium
 webdriver_manager
@@ -20,3 +21,5 @@ python-jose[cryptography]
 python-multipart
 pydantic[email]
 bcrypt<4.0e
+passlib
+jose

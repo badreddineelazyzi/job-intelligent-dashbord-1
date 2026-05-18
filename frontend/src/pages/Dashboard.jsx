@@ -69,10 +69,39 @@ export default function Dashboard() {
     setIsHistoryLoading(true);
     try {
       const response = await searchHistoryAPI.getHistory();
-      setSearchHistory(response.data || []);
+      // Merge server history with any local (anonymous) history stored in localStorage
+      const serverHistory = response.data || [];
+      let local = [];
+      try {
+        local = JSON.parse(localStorage.getItem('search_history') || '[]');
+      } catch (e) {
+        local = [];
+      }
+
+      // Normalize local entries to match server shape
+      const normalizedLocal = local.map((item, i) => ({
+        id: `local-${i}-${item.created_at}`,
+        query: item.query,
+        created_at: item.created_at,
+        results_count: 0
+      }));
+
+      setSearchHistory([...normalizedLocal, ...serverHistory]);
     } catch (error) {
       console.error('Erreur historique:', error);
-      setSearchHistory([]);
+      // If server fails, fallback to localStorage
+      try {
+        const local = JSON.parse(localStorage.getItem('search_history') || '[]');
+        const normalizedLocal = local.map((item, i) => ({
+          id: `local-${i}-${item.created_at}`,
+          query: item.query,
+          created_at: item.created_at,
+          results_count: 0
+        }));
+        setSearchHistory(normalizedLocal);
+      } catch (e) {
+        setSearchHistory([]);
+      }
     } finally {
       setIsHistoryLoading(false);
     }

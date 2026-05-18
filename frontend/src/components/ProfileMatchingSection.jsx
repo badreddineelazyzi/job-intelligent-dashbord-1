@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { jobsAPI } from '../services/api';
 import JobCard from './JobCard'; 
